@@ -22,7 +22,7 @@
 #include "usbd_cdc_if.h"
 
 /* USER CODE BEGIN INCLUDE */
-
+#include "stm32f4xx_hal.h"
 /* USER CODE END INCLUDE */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -31,7 +31,8 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-
+extern uint8_t USB_Rx_data[USB_BUF_SIZE];
+extern UART_HandleTypeDef huart2;
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -261,8 +262,24 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
+  uint8_t status = HAL_OK;
+
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
+
+
+  memset (USB_Rx_data, '\0', USB_BUF_SIZE);  // clear the buffer
+  uint8_t len = (uint8_t)*Len;
+  memcpy(USB_Rx_data, Buf, len);  // copy the data to the buffer
+  memset(Buf, '\0', len);   // clear the Buf also
+
+  if (USB_Rx_data[0] != 0x0) {
+
+	  if (HAL_UART_Transmit(&huart2, USB_Rx_data, 1, 2000) != HAL_OK) {
+		  status = HAL_ERROR;
+	  }
+  }
+
   return (USBD_OK);
   /* USER CODE END 6 */
 }

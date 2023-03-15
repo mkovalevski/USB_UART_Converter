@@ -46,6 +46,8 @@ extern "C" {
 
 /* Exported macro ------------------------------------------------------------*/
 /* USER CODE BEGIN EM */
+#define UART_BUF_SIZE 64
+#define USB_BUF_SIZE 10
 
 /* USER CODE END EM */
 

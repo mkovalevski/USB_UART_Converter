@@ -41,7 +41,8 @@
 
 /* Private variables ---------------------------------------------------------*/
 /* USER CODE BEGIN PV */
-
+static uint32_t counter;
+static int32_t dma_interrupt_flag;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -56,8 +57,10 @@
 
 /* External variables --------------------------------------------------------*/
 extern PCD_HandleTypeDef hpcd_USB_OTG_FS;
+extern TIM_HandleTypeDef htim7;
+extern DMA_HandleTypeDef hdma_usart2_rx;
 /* USER CODE BEGIN EV */
-
+extern uint8_t UART_Rx_data[UART_BUF_SIZE];
 /* USER CODE END EV */
 
 /******************************************************************************/
@@ -197,6 +200,63 @@ void SysTick_Handler(void)
 /* For the available peripheral interrupt handler names,                      */
 /* please refer to the startup file (startup_stm32f4xx.s).                    */
 /******************************************************************************/
+
+/**
+  * @brief This function handles DMA1 stream5 global interrupt.
+  */
+void DMA1_Stream5_IRQHandler(void)
+{
+  /* USER CODE BEGIN DMA1_Stream5_IRQn 0 */
+	if (DMA1->HISR & DMA_HISR_TCIF5) {
+		DMA1->HIFCR = DMA_HIFCR_CTCIF5;
+		CDC_Transmit_FS(UART_Rx_data, UART_BUF_SIZE/2);
+		dma_interrupt_flag = 2;
+	}
+	if (DMA1->HISR & DMA_HISR_HTIF5) {
+		DMA1->HIFCR = DMA_HIFCR_CHTIF5;
+		CDC_Transmit_FS(UART_Rx_data+UART_BUF_SIZE/2, UART_BUF_SIZE/2);
+		dma_interrupt_flag = 1;
+	}
+	counter = 0;
+  /* USER CODE END DMA1_Stream5_IRQn 0 */
+  HAL_DMA_IRQHandler(&hdma_usart2_rx);
+  /* USER CODE BEGIN DMA1_Stream5_IRQn 1 */
+
+  /* USER CODE END DMA1_Stream5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles TIM7 global interrupt.
+  */
+void TIM7_IRQHandler(void)
+{
+  /* USER CODE BEGIN TIM7_IRQn 0 */
+	static int32_t bbuf_pointer;
+	uint32_t buf_pointer = UART_BUF_SIZE - DMA1_Stream5->NDTR;
+	if (TIM7->SR & TIM_SR_UIF) {
+		TIM7->SR = 0;
+		if (dma_interrupt_flag) {
+			dma_interrupt_flag = 0;
+			if (dma_interrupt_flag == 1) bbuf_pointer = UART_BUF_SIZE/2;
+			else bbuf_pointer = 0;
+		}
+		counter++;
+		if (counter == 500) {
+			counter = 0;
+			if (bbuf_pointer != buf_pointer) {
+				CDC_Transmit_FS(UART_Rx_data + bbuf_pointer, buf_pointer - bbuf_pointer);
+				bbuf_pointer = buf_pointer;
+			}
+		}
+	}
+
+
+  /* USER CODE END TIM7_IRQn 0 */
+  HAL_TIM_IRQHandler(&htim7);
+  /* USER CODE BEGIN TIM7_IRQn 1 */
+
+  /* USER CODE END TIM7_IRQn 1 */
+}
 
 /**
   * @brief This function handles USB On The Go FS global interrupt.

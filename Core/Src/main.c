@@ -18,13 +18,16 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "usb_device.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "usbd_cdc_if.h"
+#include "string.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -44,6 +47,8 @@
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
+uint8_t UART_Rx_data[UART_BUF_SIZE];
+uint8_t USB_Rx_data[USB_BUF_SIZE];
 
 /* USER CODE END PV */
 
@@ -86,10 +91,22 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_UART4_Init();
   MX_USART2_UART_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM7_Init();
   /* USER CODE BEGIN 2 */
+
+  USART2->CR3 |= USART_CR3_DMAR;
+
+  TIM7->CR1 |= TIM_CR1_CEN;
+  TIM7->DIER |= TIM_DIER_UIE;
+
+  DMA1_Stream5->M0AR = UART_Rx_data;
+  DMA1_Stream5->PAR = &(USART2->DR);
+  DMA1_Stream5->NDTR = UART_BUF_SIZE;
+  DMA1_Stream5->CR |= DMA_SxCR_HTIE | DMA_SxCR_TCIE | DMA_SxCR_EN;
 
   /* USER CODE END 2 */
 
