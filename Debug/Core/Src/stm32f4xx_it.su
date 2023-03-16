@@ -9,4 +9,4 @@
 ../Core/Src/stm32f4xx_it.c:186:6:SysTick_Handler	8	static
 ../Core/Src/stm32f4xx_it.c:207:6:DMA1_Stream5_IRQHandler	8	static
 ../Core/Src/stm32f4xx_it.c:231:6:TIM7_IRQHandler	16	static
-../Core/Src/stm32f4xx_it.c:264:6:OTG_FS_IRQHandler	8	static
+../Core/Src/stm32f4xx_it.c:266:6:OTG_FS_IRQHandler	8	static

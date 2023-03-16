@@ -236,12 +236,14 @@ void TIM7_IRQHandler(void)
 	if (TIM7->SR & TIM_SR_UIF) {
 		TIM7->SR = 0;
 		if (dma_interrupt_flag) {
-			dma_interrupt_flag = 0;
-			if (dma_interrupt_flag == 1) bbuf_pointer = UART_BUF_SIZE/2;
+			if (dma_interrupt_flag == 1){
+				bbuf_pointer = UART_BUF_SIZE/2;
+			}
 			else bbuf_pointer = 0;
+			dma_interrupt_flag = 0;
 		}
 		counter++;
-		if (counter == 500) {
+		if (counter == 150) {
 			counter = 0;
 			if (bbuf_pointer != buf_pointer) {
 				CDC_Transmit_FS(UART_Rx_data + bbuf_pointer, buf_pointer - bbuf_pointer);
